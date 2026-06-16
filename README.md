@@ -1,3 +1,7 @@
+<div align="center">
+  <img alt="Pallas-Bot" src="https://user-images.githubusercontent.com/18511905/195892994-c1a231ec-147a-4f98-ba75-137d89578247.png" width="360" height="270" />
+</div>
+
 # pallas-plugin-maa
 
 Pallas-Bot 4.0 官方扩展：**MAA 远控**（含 worker 插件 `pallas_plugin_maa` 与分片 hub 入口 `pallas_plugin_maa_hub`）。
