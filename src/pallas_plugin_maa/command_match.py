@@ -4,7 +4,7 @@ from nonebot.adapters import Event
 from nonebot.rule import Rule
 from nonebot.typing import T_State
 
-from src.foundation.command_prefix import matches_command_prefix
+from pallas.api.config import matches_command_prefix
 
 BIND_COMMAND = "牛牛绑定MAA"
 BIND_COMMAND_ALT = "牛牛绑定MAA设备"

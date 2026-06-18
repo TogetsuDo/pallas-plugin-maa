@@ -7,8 +7,8 @@ from typing import Any
 
 from ulid import ULID
 
-from src.foundation.config import UserConfig
-from src.platform.shard import context as shard_ctx
+from pallas.api.config import UserConfig
+from pallas.core.platform.shard import context as shard_ctx
 
 from .tasks import MaaTaskSpec, build_task_payload, normalize_device_id
 
@@ -143,7 +143,7 @@ class MaaStore:
             cutoff = now - ttl
             self._seen = {k: ts for k, ts in self._seen.items() if ts >= cutoff}
         if shard_ctx.sharding_active():
-            from src.platform.shard.coord.maa_seen_registry import touch_maa_seen_sync
+            from pallas.core.platform.shard.coord.maa_seen_registry import touch_maa_seen_sync
 
             await asyncio.to_thread(touch_maa_seen_sync, user, norm)
 
@@ -158,7 +158,7 @@ class MaaStore:
             if ts is not None and now - ts <= ttl:
                 return True
         if shard_ctx.sharding_active():
-            from src.platform.shard.coord.maa_seen_registry import was_maa_seen_sync
+            from pallas.core.platform.shard.coord.maa_seen_registry import was_maa_seen_sync
 
             return await asyncio.to_thread(was_maa_seen_sync, user, norm, ttl)
         return False
@@ -343,7 +343,7 @@ class MaaStore:
         if not any(d.device == device and d.verified for d in devices):
             return [], "当前设备未绑定或已失效，请重新绑定。"
 
-        from src.platform.shard.coord.maa_route_registry import register_maa_user_route
+        from pallas.core.platform.shard.coord.maa_route_registry import register_maa_user_route
 
         register_maa_user_route(user_key)
         shard_pending = shard_ctx.sharding_active()
@@ -383,7 +383,7 @@ class MaaStore:
                 to_enqueue.append(rec)
                 task_ids.append(shot_id)
         if shard_pending:
-            from src.platform.shard.coord.maa_pending_registry import enqueue_task_sync
+            from pallas.core.platform.shard.coord.maa_pending_registry import enqueue_task_sync
 
             for rec in to_enqueue:
                 await asyncio.to_thread(enqueue_task_sync, pending_task_to_dict(rec))
@@ -394,7 +394,7 @@ class MaaStore:
         if not norm:
             return []
         if shard_ctx.sharding_active():
-            from src.platform.shard.coord.maa_pending_registry import list_pending_sync
+            from pallas.core.platform.shard.coord.maa_pending_registry import list_pending_sync
 
             raw = await asyncio.to_thread(list_pending_sync, user.strip(), norm)
             items = [pending_task_from_dict(x) for x in raw]
@@ -414,7 +414,7 @@ class MaaStore:
 
     async def mark_reported(self, task_id: str) -> PendingTask | None:
         if shard_ctx.sharding_active():
-            from src.platform.shard.coord.maa_pending_registry import mark_reported_sync
+            from pallas.core.platform.shard.coord.maa_pending_registry import mark_reported_sync
 
             raw = await asyncio.to_thread(mark_reported_sync, task_id)
             return pending_task_from_dict(raw) if raw else None
@@ -428,7 +428,7 @@ class MaaStore:
     async def pending_count_for_user(self, qq_id: int) -> int:
         user_key = str(qq_id)
         if shard_ctx.sharding_active():
-            from src.platform.shard.coord.maa_pending_registry import (
+            from pallas.core.platform.shard.coord.maa_pending_registry import (
                 pending_count_for_user_sync,
             )
 
@@ -446,7 +446,7 @@ class MaaStore:
             return 0
         user_key = str(qq_id)
         if shard_ctx.sharding_active():
-            from src.platform.shard.coord.maa_pending_registry import (
+            from pallas.core.platform.shard.coord.maa_pending_registry import (
                 pending_count_for_device_sync,
             )
 
@@ -465,7 +465,7 @@ class MaaStore:
         user_key = str(qq_id)
         norm = normalize_device_id(device) if device else None
         if shard_ctx.sharding_active():
-            from src.platform.shard.coord.maa_pending_registry import clear_pending_sync
+            from pallas.core.platform.shard.coord.maa_pending_registry import clear_pending_sync
 
             return await asyncio.to_thread(clear_pending_sync, user_key, device=norm)
         async with self._lock:
@@ -486,7 +486,7 @@ class MaaStore:
         user_key = str(qq_id)
         norm = normalize_device_id(device) if device else None
         if shard_ctx.sharding_active():
-            from src.platform.shard.coord.maa_pending_registry import (
+            from pallas.core.platform.shard.coord.maa_pending_registry import (
                 pending_type_counts_sync,
             )
 

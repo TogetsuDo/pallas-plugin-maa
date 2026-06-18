@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 
-from src.console.webui import install_hot_reload_config
-from src.console.webui.field_help import field_help
+from pallas.api.config import install_hot_reload_config
+from pallas.api.config import field_help
 
 
 class Config(BaseModel, extra="ignore"):
@@ -68,12 +68,12 @@ class Config(BaseModel, extra="ignore"):
 def on_maa_config_reload(cfg: Config) -> None:  # noqa: ARG001
     from nonebot import get_app
 
-    from src.platform.bot_runtime.roles import is_hub_role
-    from src.platform.shard import context as shard_ctx
+    from pallas.api.platform import is_hub_role
+    from pallas.core.platform.shard import context as shard_ctx
 
     app = get_app()
     if is_hub_role():
-        from src.platform.shard.coord.maa_hub_routes import (
+        from pallas.core.platform.shard.coord.maa_hub_routes import (
             remount_maa_hub_forward_routes,
         )
 
@@ -86,7 +86,7 @@ def on_maa_config_reload(cfg: Config) -> None:  # noqa: ARG001
 
         remount_maa_http_routes(app)
     try:
-        from src.plugins.help.plugin_manager import clear_help_cache
+        from packages.help.plugin_manager import clear_help_cache
 
         clear_help_cache()
     except Exception:

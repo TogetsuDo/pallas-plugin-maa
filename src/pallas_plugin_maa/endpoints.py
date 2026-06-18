@@ -4,8 +4,8 @@ from dataclasses import dataclass
 
 from nonebot import get_driver
 
-from src.console.web import public_base_url as nonebot_public_base_url
-from src.platform.shard import context as shard_ctx
+from pallas.console.web import public_base_url as nonebot_public_base_url
+from pallas.core.platform.shard import context as shard_ctx
 
 from .config import Config, get_maa_config
 
@@ -47,7 +47,7 @@ def maa_public_http_base(cfg: Config) -> tuple[str, bool]:
     configured = normalize_public_base_url(cfg.maa_public_base_url)
     if configured:
         return configured, False
-    from src.platform.shard.registry.config import get_shard_registry_settings
+    from pallas.core.platform.shard.registry.config import get_shard_registry_settings
 
     if shard_ctx.sharding_active():
         s = get_shard_registry_settings()

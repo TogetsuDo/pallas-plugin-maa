@@ -26,7 +26,7 @@ class ReportStatusRequest(BaseModel):
 
 
 async def maa_get_task(body: GetTaskRequest) -> GetTaskResponse:
-    from src.platform.shard.coord.maa_route_registry import register_maa_user_route
+    from pallas.core.platform.shard.coord.maa_route_registry import register_maa_user_route
 
     register_maa_user_route(body.user)
     cfg = get_maa_config()
@@ -81,12 +81,12 @@ async def deliver_maa_notify(
     *,
     task_id: str = "",
 ) -> None:
-    from src.platform.shard import context as shard_ctx
-    from src.platform.shard.presence import bot_has_local_connection
+    from pallas.core.platform.shard import context as shard_ctx
+    from pallas.api.platform import bot_has_local_connection
 
     bot_id = int(notify.bot_id)
     if shard_ctx.sharding_active() and not bot_has_local_connection(bot_id):
-        from src.platform.shard.coord.bot_action import (
+        from pallas.api.platform import (
             send_group_message_as_bot,
             send_private_msg_as_bot,
         )

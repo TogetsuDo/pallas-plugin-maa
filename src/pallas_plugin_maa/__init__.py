@@ -10,16 +10,16 @@ from nonebot.adapters.onebot.v11 import (
 from nonebot.plugin import PluginMetadata
 from nonebot.rule import Rule
 
-from src.features.cmd_perm import (
+from pallas.api.perm import (
     permission_for_command,
     private_message_permission_for_command,
 )
-from src.foundation.command_prefix import (
+from pallas.api.config import (
     extract_command_tail_any,
     matches_text_prefix,
     peel_text_prefix,
 )
-from src.platform.multi_bot.group import claim_group_handler
+from pallas.api.platform import claim_group_handler
 
 from .command_match import (
     BIND_COMMAND,
@@ -61,7 +61,7 @@ store = maa_store
 @get_driver().on_startup
 async def _register_maa_plugin_coord() -> None:
     from pallas_plugin_maa.endpoints import normalize_http_path
-    from src.features.plugin_coord.maa import register_maa_coord
+    from pallas.core.plugin_coord.maa import register_maa_coord
 
     register_maa_coord(
         normalize_device_id=normalize_device_id,
@@ -266,7 +266,7 @@ async def handle_bind(event: PrivateMessageEvent):
     )
     raw_device, bind_alias = parse_bind_command_args(arg_text)
     qq = str(event.get_user_id())
-    from src.platform.shard.coord.maa_route_registry import register_maa_user_route
+    from pallas.core.platform.shard.coord.maa_route_registry import register_maa_user_route
 
     register_maa_user_route(qq)
     fmt_err = bind_device_id_error(raw_device, qq)
@@ -313,7 +313,7 @@ async def handle_status(bot: Bot, event: MessageEvent):
     if not await ensure_maa_group_message_owner(event, bot):
         return
     qq = int(event.get_user_id())
-    from src.platform.shard.coord.maa_route_registry import register_maa_user_route
+    from pallas.core.platform.shard.coord.maa_route_registry import register_maa_user_route
 
     register_maa_user_route(str(qq))
     devices = await store.list_devices(qq)

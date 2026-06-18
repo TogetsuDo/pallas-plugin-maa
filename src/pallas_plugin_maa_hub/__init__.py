@@ -5,14 +5,14 @@ from __future__ import annotations
 from nonebot import get_app
 from nonebot.plugin import PluginMetadata
 
-from src.features.cmd_perm.metadata_defaults import (
+from pallas.api.metadata import (
     PLUGIN_EXTRA_VERSION,
     PLUGIN_HOMEPAGE,
     PLUGIN_MENU_TEMPLATE,
 )
-from src.features.cmd_perm.metadata_text import join_usage, usage_line
-from src.platform.bot_runtime.roles import is_hub_role
-from src.platform.shard.coord.maa_hub_routes import remount_maa_hub_forward_routes
+from pallas.api.metadata import join_usage, usage_line
+from pallas.api.platform import is_hub_role
+from pallas.core.platform.shard.coord.maa_hub_routes import remount_maa_hub_forward_routes
 
 if is_hub_role():
     remount_maa_hub_forward_routes(get_app())
