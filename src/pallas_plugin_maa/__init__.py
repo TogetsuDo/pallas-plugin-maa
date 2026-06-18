@@ -1,12 +1,24 @@
 from __future__ import annotations
 
-from nonebot import get_app, get_bot, get_driver, on_message
-from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, MessageEvent, PrivateMessageEvent
+from nonebot import get_app, get_driver, on_message
+from nonebot.adapters.onebot.v11 import (
+    Bot,
+    GroupMessageEvent,
+    MessageEvent,
+    PrivateMessageEvent,
+)
 from nonebot.plugin import PluginMetadata
 from nonebot.rule import Rule
 
-from src.features.cmd_perm import permission_for_command, private_message_permission_for_command
-from src.foundation.command_prefix import extract_command_tail_any, matches_text_prefix, peel_text_prefix
+from src.features.cmd_perm import (
+    permission_for_command,
+    private_message_permission_for_command,
+)
+from src.foundation.command_prefix import (
+    extract_command_tail_any,
+    matches_text_prefix,
+    peel_text_prefix,
+)
 from src.platform.multi_bot.group import claim_group_handler
 
 from .command_match import (
@@ -33,7 +45,7 @@ from .tasks import (
     format_maa_control_commands_help,
     format_maa_plugin_usage_brief,
     format_maa_raw_task_types_help,
-    is_combat_control_command,
+    is_combat_control_command as is_combat_control_command,
     is_control_phrase_line,
     maa_raw_task_validate,
     normalize_device_id,
@@ -170,7 +182,9 @@ remount_maa_http_routes(app)
 
 def _notify_from_event(event: MessageEvent, bot: Bot) -> NotifyTarget:
     group_id = event.group_id if isinstance(event, GroupMessageEvent) else None
-    return NotifyTarget(bot_id=int(bot.self_id), user_id=int(event.get_user_id()), group_id=group_id)
+    return NotifyTarget(
+        bot_id=int(bot.self_id), user_id=int(event.get_user_id()), group_id=group_id
+    )
 
 
 async def ensure_maa_group_message_owner(event: MessageEvent, bot: Bot) -> bool:
@@ -225,7 +239,9 @@ async def is_maa_control_msg(event: MessageEvent) -> bool:
     text = event.get_plaintext().strip()
     if is_control_phrase_line(text):
         return True
-    return matches_text_prefix(text, "牛牛设置连接 ") or matches_text_prefix(text, SETTINGS_STAGE_PREFIX)
+    return matches_text_prefix(text, "牛牛设置连接 ") or matches_text_prefix(
+        text, SETTINGS_STAGE_PREFIX
+    )
 
 
 maa_control_msg = on_message(
@@ -245,7 +261,9 @@ maa_raw_task_cmd = on_message(
 
 @bind_cmd.handle()
 async def handle_bind(event: PrivateMessageEvent):
-    arg_text = extract_command_tail_any(event.get_plaintext() or "", BIND_COMMAND_ALT, BIND_COMMAND)
+    arg_text = extract_command_tail_any(
+        event.get_plaintext() or "", BIND_COMMAND_ALT, BIND_COMMAND
+    )
     raw_device, bind_alias = parse_bind_command_args(arg_text)
     qq = str(event.get_user_id())
     from src.platform.shard.coord.maa_route_registry import register_maa_user_route
@@ -273,7 +291,11 @@ async def handle_bind(event: PrivateMessageEvent):
         hint = "\n（地址由本机 host/port 推断，对外请让管理员配置 maa_public_base_url）"
     devices = await store.list_devices(int(event.get_user_id()))
     multi = len([d for d in devices if d.verified]) > 1
-    extra = "\n已绑定多台时，远控口令发往本设备；可用「牛牛切换MAA设备」改选。" if multi else ""
+    extra = (
+        "\n已绑定多台时，远控口令发往本设备；可用「牛牛切换MAA设备」改选。"
+        if multi
+        else ""
+    )
     label = device
     if bind_alias.strip():
         label = f"{bind_alias.strip()}（{device}）"
@@ -298,9 +320,14 @@ async def handle_status(bot: Bot, event: MessageEvent):
     active = await store.get_active_device(qq)
     verified = [d for d in devices if d.verified]
     if not verified:
-        await status_cmd.finish("尚未绑定 MAA 设备。请私聊发送「牛牛绑定MAA <设备标识符>」。")
+        await status_cmd.finish(
+            "尚未绑定 MAA 设备。请私聊发送「牛牛绑定MAA <设备标识符>」。"
+        )
 
-    lines = ["已绑定设备：", *[store.format_device_line(d, active=(d.device == active)) for d in verified]]
+    lines = [
+        "已绑定设备：",
+        *[store.format_device_line(d, active=(d.device == active)) for d in verified],
+    ]
     if len(verified) > 1 and not active:
         lines.append("（未选定当前设备，请「牛牛切换MAA设备 <标识符或别名>」）")
     cfg = get_maa_config()
@@ -313,7 +340,9 @@ async def handle_status(bot: Bot, event: MessageEvent):
         on_device = await store.pending_count_for_device(qq, active)
         short = active if len(active) <= 16 else f"{active[:8]}…{active[-4:]}"
         lines.append(f"其中当前选用设备（{short}）队列：{on_device}")
-        dev_types = format_pending_type_counts(await store.pending_type_counts(qq, device=active))
+        dev_types = format_pending_type_counts(
+            await store.pending_type_counts(qq, device=active)
+        )
         if dev_types and on_device > 0:
             lines.append(dev_types.replace("待拉取明细：", "当前设备明细：", 1))
         polling = await store.was_seen(str(qq), active, cfg.maa_seen_ttl_seconds)
@@ -346,11 +375,15 @@ async def handle_clear_queue(bot: Bot, event: MessageEvent):
             )
         device = await store.get_active_device(qq)
         if not device:
-            await clear_queue_cmd.finish("尚未选定当前 MAA 设备，请先发「牛牛切换MAA设备」或绑定设备。")
+            await clear_queue_cmd.finish(
+                "尚未选定当前 MAA 设备，请先发「牛牛切换MAA设备」或绑定设备。"
+            )
     removed = await store.clear_pending(qq, device=device)
     left = await store.pending_count_for_user(qq)
     if device:
-        await clear_queue_cmd.finish(f"已清空当前选用设备上 {removed} 条待拉取任务。本账号剩余待拉取：{left}。")
+        await clear_queue_cmd.finish(
+            f"已清空当前选用设备上 {removed} 条待拉取任务。本账号剩余待拉取：{left}。"
+        )
     await clear_queue_cmd.finish(f"已清空 {removed} 条待拉取任务。当前待拉取：{left}。")
 
 
@@ -358,7 +391,9 @@ async def handle_clear_queue(bot: Bot, event: MessageEvent):
 async def handle_switch_device(event: PrivateMessageEvent):
     ref = extract_command_tail_any(event.get_plaintext() or "", SWITCH_DEVICE_COMMAND)
     if not ref:
-        await switch_device_cmd.finish("用法：牛牛切换MAA设备 <设备标识符、别名或 id 前缀（至少 8 位）>")
+        await switch_device_cmd.finish(
+            "用法：牛牛切换MAA设备 <设备标识符、别名或 id 前缀（至少 8 位）>"
+        )
     err = await store.set_active_device(int(event.get_user_id()), ref)
     if err:
         await switch_device_cmd.finish(err)
@@ -375,7 +410,9 @@ async def handle_switch_device(event: PrivateMessageEvent):
 async def handle_device_alias(event: PrivateMessageEvent):
     text = extract_command_tail_any(event.get_plaintext() or "", DEVICE_ALIAS_COMMAND)
     if not text:
-        await device_alias_cmd.finish("用法：牛牛MAA设备名 <设备> <别名>（别名为空则清除）")
+        await device_alias_cmd.finish(
+            "用法：牛牛MAA设备名 <设备> <别名>（别名为空则清除）"
+        )
     parts = text.split(maxsplit=1)
     if len(parts) < 2:
         await device_alias_cmd.finish("用法：牛牛MAA设备名 <设备标识符或别名> <别名>")
@@ -410,7 +447,10 @@ async def enqueue_and_reply(
         command_line=command_line,
     )
     last = specs[-1]
-    attach = cfg.maa_attach_screenshot and last.task_type not in TASK_TYPES_WITHOUT_AUTO_SCREENSHOT
+    attach = (
+        cfg.maa_attach_screenshot
+        and last.task_type not in TASK_TYPES_WITHOUT_AUTO_SCREENSHOT
+    )
     task_ids, err = await store.enqueue(qq, specs, notify, attach_screenshot=attach)
     if err:
         await matcher.finish(err)
@@ -440,7 +480,9 @@ async def handle_control(bot: Bot, event: MessageEvent):
     if not specs:
         return
     if matches_text_prefix(text, SETTINGS_STAGE_PREFIX):
-        stages = parse_stage_setting_values(peel_text_prefix(text, SETTINGS_STAGE_PREFIX))
+        stages = parse_stage_setting_values(
+            peel_text_prefix(text, SETTINGS_STAGE_PREFIX)
+        )
         if stages:
             await store.set_stage_plan(int(event.get_user_id()), stages)
     await enqueue_and_reply(bot, event, specs, maa_control_msg, command_line=text)
@@ -451,7 +493,9 @@ async def handle_raw_task(bot: Bot, event: MessageEvent):
     if not await ensure_maa_group_message_owner(event, bot):
         return
     arg_text = extract_command_tail_any(event.get_plaintext() or "", RAW_TASK_COMMAND)
-    line = f"{MAA_RAW_TASK_PREFIX} {arg_text}".strip() if arg_text else MAA_RAW_TASK_PREFIX
+    line = (
+        f"{MAA_RAW_TASK_PREFIX} {arg_text}".strip() if arg_text else MAA_RAW_TASK_PREFIX
+    )
     spec, err = maa_raw_task_validate(line)
     if err:
         await maa_raw_task_cmd.finish(err)

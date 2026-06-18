@@ -73,7 +73,9 @@ def on_maa_config_reload(cfg: Config) -> None:  # noqa: ARG001
 
     app = get_app()
     if is_hub_role():
-        from src.platform.shard.coord.maa_hub_routes import remount_maa_hub_forward_routes
+        from src.platform.shard.coord.maa_hub_routes import (
+            remount_maa_hub_forward_routes,
+        )
 
         from .http_routes import unmount_maa_http_routes
 

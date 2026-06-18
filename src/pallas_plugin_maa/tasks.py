@@ -9,7 +9,9 @@ from src.foundation.command_prefix import matches_text_prefix, peel_text_prefix
 
 # MAA 客户端常见为 32 位十六进制；协议示例亦可能出现标准 UUID
 _DEVICE_HEX32_RE = re.compile(r"^[0-9a-fA-F]{32}$")
-_DEVICE_UUID_RE = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+_DEVICE_UUID_RE = re.compile(
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+)
 
 
 def normalize_device_id(raw: str) -> str | None:
@@ -56,50 +58,62 @@ def bind_device_id_error(raw: str, qq: str) -> str | None:
             "（也可发：牛牛绑定MAA设备 <标识符> [别名]）"
         )
     if normalize_device_id(text) is None:
-        return "设备标识符格式不正确，请从 MAA「远程控制」完整复制「设备标识符（只读）」。"
+        return (
+            "设备标识符格式不正确，请从 MAA「远程控制」完整复制「设备标识符（只读）」。"
+        )
     return None
 
 
 # 协议支持的 type，见 https://docs.maa.plus/zh-cn/protocol/remote-control-schema.html
-LINK_START_SUBTYPES = frozenset({
-    "LinkStart-Base",
-    "LinkStart-WakeUp",
-    "LinkStart-Combat",
-    "LinkStart-Recruiting",
-    "LinkStart-Mall",
-    "LinkStart-Mission",
-    "LinkStart-AutoRoguelike",
-    "LinkStart-Reclamation",
-})
+LINK_START_SUBTYPES = frozenset(
+    {
+        "LinkStart-Base",
+        "LinkStart-WakeUp",
+        "LinkStart-Combat",
+        "LinkStart-Recruiting",
+        "LinkStart-Mall",
+        "LinkStart-Mission",
+        "LinkStart-AutoRoguelike",
+        "LinkStart-Reclamation",
+    }
+)
 
 STAGE_SETTING_MAX = 4
 
 # 远控仅文档化 Settings-Stage1；勿下发 Stage2~4 / FightEnable
 SETTINGS_STAGE_REMOTE = "Settings-Stage1"
 
-SETTINGS_TYPES = frozenset({
-    "Settings-ConnectionAddress",
-    SETTINGS_STAGE_REMOTE,
-})
+SETTINGS_TYPES = frozenset(
+    {
+        "Settings-ConnectionAddress",
+        SETTINGS_STAGE_REMOTE,
+    }
+)
 
 COMBAT_COMMAND_PHRASE = "牛牛作战"
 # TODO：MAA 远控 LinkStart-Combat 在含「剩余理智」等辅助 FightTask 时失败；官方合并 PR 后改回 LinkStart-Combat
 COMBAT_COMMAND_TASK_TYPE = "LinkStart"
 COMBAT_PREP_TASK_TYPES = frozenset({"LinkStart-Combat"})
 
-TOOLBOX_TYPES = frozenset({
-    "Toolbox-GachaOnce",
-    "Toolbox-GachaTenTimes",
-})
+TOOLBOX_TYPES = frozenset(
+    {
+        "Toolbox-GachaOnce",
+        "Toolbox-GachaTenTimes",
+    }
+)
 
-IMMEDIATE_TYPES = frozenset({
-    "CaptureImageNow",
-    "StopTask",
-    "HeartBeat",
-})
+IMMEDIATE_TYPES = frozenset(
+    {
+        "CaptureImageNow",
+        "StopTask",
+        "HeartBeat",
+    }
+)
 
 # 下发这些 type 时不再自动追加截图任务
-TASK_TYPES_WITHOUT_AUTO_SCREENSHOT = IMMEDIATE_TYPES | frozenset({"CaptureImage"}) | SETTINGS_TYPES
+TASK_TYPES_WITHOUT_AUTO_SCREENSHOT = (
+    IMMEDIATE_TYPES | frozenset({"CaptureImage"}) | SETTINGS_TYPES
+)
 
 # 维护者：LinkStart-* 子项不含唤醒；游戏未在主界面时 MAA 易 TaskChainError。
 # 牛牛不自动前置 LinkStart-WakeUp。截图/心跳/停止见 IMMEDIATE_TYPES。详见 docs/plugins/maa/README.md「维护者说明」。
@@ -202,7 +216,9 @@ MAA_CONTROL_COMMAND_HELPS: tuple[MaaControlCommandHelp, ...] = (
     ),
 )
 
-COMMAND_TASK_MAP: dict[str, str] = {item.phrase: item.task_type for item in MAA_CONTROL_COMMAND_HELPS}
+COMMAND_TASK_MAP: dict[str, str] = {
+    item.phrase: item.task_type for item in MAA_CONTROL_COMMAND_HELPS
+}
 
 SETTINGS_CONNECTION_PREFIX = "牛牛设置连接 "
 SETTINGS_STAGE_PREFIX = "牛牛设置关卡 "
@@ -221,7 +237,9 @@ _MAA_SETTINGS_COMMAND_HELPS: tuple[MaaControlCommandHelp, ...] = (
 )
 
 
-def _maa_help_table_section(title: str, items: tuple[MaaControlCommandHelp, ...]) -> str:
+def _maa_help_table_section(
+    title: str, items: tuple[MaaControlCommandHelp, ...]
+) -> str:
     rows = ["| 口令 | 说明 |", "|------|------|"]
     for item in items:
         phrase = item.phrase.replace("|", "｜")
@@ -232,12 +250,14 @@ def _maa_help_table_section(title: str, items: tuple[MaaControlCommandHelp, ...]
 
 def format_maa_plugin_usage_brief() -> str:
     """二级帮助页「插件内用法」简报。"""
-    return "\n\n".join([
-        "1. **私聊绑定**：牛牛绑定MAA <设备标识符> [别名]（设备 id 见 MAA「远程控制」）",
-        "2. **MAA 配置**：「远程控制」填写上方对接地址；用户标识符填 QQ 号",
-        "3. **远控口令**：牛牛长草、牛牛作战、牛牛公招等（须已绑定；**完整表**见下表第 2 条 → 功能详情）",
-        "4. **多设备**（私聊）：牛牛MAA状态、牛牛切换MAA设备、牛牛MAA设备名、牛牛清空MAA队列",
-    ])
+    return "\n\n".join(
+        [
+            "1. **私聊绑定**：牛牛绑定MAA <设备标识符> [别名]（设备 id 见 MAA「远程控制」）",
+            "2. **MAA 配置**：「远程控制」填写上方对接地址；用户标识符填 QQ 号",
+            "3. **远控口令**：牛牛长草、牛牛作战、牛牛公招等（须已绑定；**完整表**见下表第 2 条 → 功能详情）",
+            "4. **多设备**（私聊）：牛牛MAA状态、牛牛切换MAA设备、牛牛MAA设备名、牛牛清空MAA队列",
+        ]
+    )
 
 
 def format_maa_control_commands_help() -> str:
@@ -251,21 +271,25 @@ def format_maa_control_commands_help() -> str:
         _maa_help_table_section("截图与控制", MAA_CONTROL_COMMAND_HELPS[9:]),
         _maa_help_table_section("设置", _MAA_SETTINGS_COMMAND_HELPS),
     ]
-    return "\n\n".join([
-        "发送**完整一行**口令（须先私聊绑定）。子项口令不含唤醒，游戏宜在主界面。",
-        *sections,
-        "高级：牛牛MAA任务 <type> [params] → 见本插件「MAA 远控（原始 type）」详情。",
-    ])
+    return "\n\n".join(
+        [
+            "发送**完整一行**口令（须先私聊绑定）。子项口令不含唤醒，游戏宜在主界面。",
+            *sections,
+            "高级：牛牛MAA任务 <type> [params] → 见本插件「MAA 远控（原始 type）」详情。",
+        ]
+    )
 
 
 def format_maa_raw_task_types_help() -> str:
     common = "LinkStart、LinkStart-Combat、CaptureImage、Settings-Stage1、StopTask…"
-    return "\n\n".join([
-        "用法：牛牛MAA任务 <type> [params]",
-        "Settings-* 须带 params；其余 type 勿带多余参数。",
-        f"常用 type：{common}",
-        "完整列表见协议文档；示例：牛牛MAA任务 Settings-Stage1 1-7",
-    ])
+    return "\n\n".join(
+        [
+            "用法：牛牛MAA任务 <type> [params]",
+            "Settings-* 须带 params；其余 type 勿带多余参数。",
+            f"常用 type：{common}",
+            "完整列表见协议文档；示例：牛牛MAA任务 Settings-Stage1 1-7",
+        ]
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -315,7 +339,9 @@ def build_combat_prep_specs(stage_plan: list[str]) -> list[MaaTaskSpec]:
 
 @lru_cache(maxsize=1)
 def control_phrase_to_task_type() -> dict[str, str]:
-    return {phrase.casefold(): task_type for phrase, task_type in COMMAND_TASK_MAP.items()}
+    return {
+        phrase.casefold(): task_type for phrase, task_type in COMMAND_TASK_MAP.items()
+    }
 
 
 def task_type_for_control_phrase(line: str) -> str | None:
@@ -385,7 +411,9 @@ def parse_command_specs(text: str) -> list[MaaTaskSpec] | None:
         return None
 
     if matches_text_prefix(line, SETTINGS_STAGE_PREFIX):
-        stages = parse_stage_setting_values(peel_text_prefix(line, SETTINGS_STAGE_PREFIX))
+        stages = parse_stage_setting_values(
+            peel_text_prefix(line, SETTINGS_STAGE_PREFIX)
+        )
         if stages:
             return build_stage_setting_specs(stages)
         return None

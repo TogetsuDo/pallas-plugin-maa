@@ -3,7 +3,12 @@ from __future__ import annotations
 from fastapi import FastAPI  # noqa: TC002
 from nonebot import logger
 
-from .http_api import GetTaskResponse, current_maa_http_paths, maa_get_task, maa_report_status
+from .http_api import (
+    GetTaskResponse,
+    current_maa_http_paths,
+    maa_get_task,
+    maa_report_status,
+)
 
 _mounted_paths: frozenset[str] = frozenset()
 
@@ -13,7 +18,11 @@ def unmount_maa_http_routes(app: FastAPI) -> None:
     global _mounted_paths
     if not _mounted_paths:
         return
-    app.router.routes = [route for route in app.router.routes if getattr(route, "path", None) not in _mounted_paths]
+    app.router.routes = [
+        route
+        for route in app.router.routes
+        if getattr(route, "path", None) not in _mounted_paths
+    ]
     _mounted_paths = frozenset()
     logger.info("maa http routes unmounted")
 
@@ -27,7 +36,11 @@ def remount_maa_http_routes(app: FastAPI) -> None:
         return
 
     if _mounted_paths:
-        app.router.routes = [route for route in app.router.routes if getattr(route, "path", None) not in _mounted_paths]
+        app.router.routes = [
+            route
+            for route in app.router.routes
+            if getattr(route, "path", None) not in _mounted_paths
+        ]
 
     app.add_api_route(
         get_path,
@@ -43,4 +56,6 @@ def remount_maa_http_routes(app: FastAPI) -> None:
         name="maa_report_status",
     )
     _mounted_paths = new_paths
-    logger.info("maa http routes remounted: getTask={} reportStatus={}", get_path, report_path)
+    logger.info(
+        "maa http routes remounted: getTask={} reportStatus={}", get_path, report_path
+    )

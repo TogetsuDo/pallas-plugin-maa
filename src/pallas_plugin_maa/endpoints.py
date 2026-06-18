@@ -55,7 +55,9 @@ def maa_public_http_base(cfg: Config) -> tuple[str, bool]:
         return nonebot_public_base_url(host=host, port=s.hub_port), True
     dconf = get_driver().config
     return (
-        nonebot_public_base_url(host=getattr(dconf, "host", None), port=getattr(dconf, "port", None)),
+        nonebot_public_base_url(
+            host=getattr(dconf, "host", None), port=getattr(dconf, "port", None)
+        ),
         True,
     )
 
@@ -95,7 +97,9 @@ def resolve_maa_process_http_endpoints(cfg: Config | None = None) -> MaaHttpEndp
         return MaaHttpEndpoints(get_override, report_override, inferred_base=False)
 
     dconf = get_driver().config
-    base = nonebot_public_base_url(host=getattr(dconf, "host", None), port=getattr(dconf, "port", None))
+    base = nonebot_public_base_url(
+        host=getattr(dconf, "host", None), port=getattr(dconf, "port", None)
+    )
     get_url = get_override or f"{base}{get_path}"
     report_url = report_override or f"{base}{report_path}"
     return MaaHttpEndpoints(get_url, report_url, inferred_base=True)

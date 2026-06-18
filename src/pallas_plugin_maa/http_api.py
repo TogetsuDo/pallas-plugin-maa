@@ -62,7 +62,10 @@ async def maa_report_status(body: ReportStatusRequest) -> dict[str, str]:
     elif task.task_type in {"CaptureImage", "CaptureImageNow"} and body.payload:
         lines.append("截图如下：")
         msg_text = "\n".join(lines)
-        segments = [MessageSegment.text(msg_text), MessageSegment.image(f"base64://{body.payload}")]
+        segments = [
+            MessageSegment.text(msg_text),
+            MessageSegment.image(f"base64://{body.payload}"),
+        ]
     else:
         if body.payload:
             lines.append(body.payload[:500])
@@ -83,7 +86,10 @@ async def deliver_maa_notify(
 
     bot_id = int(notify.bot_id)
     if shard_ctx.sharding_active() and not bot_has_local_connection(bot_id):
-        from src.platform.shard.coord.bot_action import send_group_message_as_bot, send_private_msg_as_bot
+        from src.platform.shard.coord.bot_action import (
+            send_group_message_as_bot,
+            send_private_msg_as_bot,
+        )
 
         message = Message(segments)
         try:
@@ -100,9 +106,15 @@ async def deliver_maa_notify(
                     message,
                 )
             if not ok:
-                logger.warning("maa reportStatus: shard notify failed bot={} task={}", bot_id, task_id)
+                logger.warning(
+                    "maa reportStatus: shard notify failed bot={} task={}",
+                    bot_id,
+                    task_id,
+                )
         except Exception as exc:
-            logger.warning("maa reportStatus: shard notify error task={}: {}", task_id, exc)
+            logger.warning(
+                "maa reportStatus: shard notify error task={}: {}", task_id, exc
+            )
         return
 
     try:
