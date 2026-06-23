@@ -20,6 +20,7 @@ from pallas.api.config import (
     peel_text_prefix,
 )
 from pallas.api.platform import claim_group_handler
+from pallas.product.llm.knowledge.declare import knowledge_source_row
 
 from .command_match import (
     BIND_COMMAND,
@@ -173,6 +174,39 @@ __plugin_meta__ = PluginMetadata(
                 "detail_des": "维护者对照；用户只需在 MAA 填写二级帮助中的对接地址。",
             },
         ],
+        "knowledge_sources": [
+            knowledge_source_row(
+                source_id="maa.faq",
+                title="MAA 远控说明",
+                description="QQ 内绑定与下发 MAA 任务",
+                chunks=[
+                    {
+                        "title": "绑定设备",
+                        "content": (
+                            "私聊发送「牛牛绑定MAA <设备标识符> [别名]」绑定 MAA 与 QQ；"
+                            "设备标识符在 MAA「远程控制」中查看，须 MAA 已连上牛牛后再绑定。"
+                        ),
+                        "keywords": "绑定,MAA,设备,牛牛绑定MAA",
+                    },
+                    {
+                        "title": "常用远控口令",
+                        "content": (
+                            "绑定后可发送「牛牛长草」「牛牛作战」「牛牛公招」等口令下发任务；"
+                            "「牛牛MAA状态」查看设备与队列；多台设备用「牛牛切换MAA设备」。"
+                        ),
+                        "keywords": "长草,作战,公招,状态,远控,任务",
+                    },
+                    {
+                        "title": "高级与限制",
+                        "content": (
+                            "「牛牛MAA任务 <type>」为高级原始协议入口；"
+                            "「牛牛清空MAA队列」只清牛牛侧排队，不影响 MAA 正在跑的任务。"
+                        ),
+                        "keywords": "原始任务,清空队列,高级,限制",
+                    },
+                ],
+            ),
+        ],
     },
 )
 
@@ -266,7 +300,9 @@ async def handle_bind(event: PrivateMessageEvent):
     )
     raw_device, bind_alias = parse_bind_command_args(arg_text)
     qq = str(event.get_user_id())
-    from pallas.core.platform.shard.coord.maa_route_registry import register_maa_user_route
+    from pallas.core.platform.shard.coord.maa_route_registry import (
+        register_maa_user_route,
+    )
 
     register_maa_user_route(qq)
     fmt_err = bind_device_id_error(raw_device, qq)
@@ -313,7 +349,9 @@ async def handle_status(bot: Bot, event: MessageEvent):
     if not await ensure_maa_group_message_owner(event, bot):
         return
     qq = int(event.get_user_id())
-    from pallas.core.platform.shard.coord.maa_route_registry import register_maa_user_route
+    from pallas.core.platform.shard.coord.maa_route_registry import (
+        register_maa_user_route,
+    )
 
     register_maa_user_route(str(qq))
     devices = await store.list_devices(qq)
