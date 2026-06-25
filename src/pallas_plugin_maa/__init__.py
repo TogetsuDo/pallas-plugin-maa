@@ -88,6 +88,7 @@ __plugin_meta__ = PluginMetadata(
             {"id": "maa.status", "label": "牛牛MAA状态", "default": "everyone"},
         ],
         "command_limits": [
+            {"id": "maa.bind", "cd_sec": 3},
             {"id": "maa.status", "cd_sec": 2},
             {"id": "maa.clear_queue", "cd_sec": 3},
             {"id": "maa.switch_device", "cd_sec": 2},
