@@ -26,7 +26,9 @@ class ReportStatusRequest(BaseModel):
 
 
 async def maa_get_task(body: GetTaskRequest) -> GetTaskResponse:
-    from pallas.core.platform.shard.coord.maa_route_registry import register_maa_user_route
+    from pallas.core.platform.shard.coord.maa_route_registry import (
+        register_maa_user_route,
+    )
 
     register_maa_user_route(body.user)
     cfg = get_maa_config()

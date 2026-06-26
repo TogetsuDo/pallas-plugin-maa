@@ -12,7 +12,9 @@ from pallas.api.metadata import (
 )
 from pallas.api.metadata import join_usage, usage_line
 from pallas.api.platform import is_hub_role
-from pallas.core.platform.shard.coord.maa_hub_routes import remount_maa_hub_forward_routes
+from pallas.core.platform.shard.coord.maa_hub_routes import (
+    remount_maa_hub_forward_routes,
+)
 
 if is_hub_role():
     remount_maa_hub_forward_routes(get_app())
