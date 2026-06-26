@@ -5,6 +5,9 @@
 
 ## [Unreleased]
 
+## [4.0.9] - 2026-06-27
+- fix(help): 帮助页用法文案去掉 Markdown 加粗星号，适配 PIL v3 成图
+
 ## [4.0.8] - 2026-06-25
 - feat(metadata): 补充绑定 MAA 命令冷却声明
 
