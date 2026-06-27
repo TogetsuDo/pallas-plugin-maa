@@ -14,6 +14,7 @@ from pallas.api.perm import (
     permission_for_command,
     private_message_permission_for_command,
 )
+from pallas.api.limits import is_command_cooldown_ready, refresh_command_cooldown
 from pallas.api.config import (
     extract_command_tail_any,
     matches_text_prefix,
@@ -84,14 +85,27 @@ __plugin_meta__ = PluginMetadata(
         "ingress_route": {"lane": "remote"},
         "command_permissions": [
             {"id": "maa.bind", "label": "牛牛绑定MAA", "default": "everyone"},
+            {
+                "id": "maa.switch_device",
+                "label": "牛牛切换MAA设备",
+                "default": "everyone",
+            },
+            {"id": "maa.device_alias", "label": "牛牛MAA设备名", "default": "everyone"},
             {"id": "maa.control", "label": "MAA 远控指令", "default": "everyone"},
+            {"id": "maa.raw_task", "label": "牛牛MAA任务", "default": "everyone"},
+            {
+                "id": "maa.clear_queue",
+                "label": "牛牛清空MAA队列",
+                "default": "everyone",
+            },
             {"id": "maa.status", "label": "牛牛MAA状态", "default": "everyone"},
         ],
         "command_limits": [
             {"id": "maa.bind", "cd_sec": 3},
+            {"id": "maa.switch_device", "cd_sec": 2},
+            {"id": "maa.device_alias", "cd_sec": 2},
             {"id": "maa.status", "cd_sec": 2},
             {"id": "maa.clear_queue", "cd_sec": 3},
-            {"id": "maa.switch_device", "cd_sec": 2},
             {"id": "maa.raw_task", "cd_sec": 3},
             {"id": "maa.control", "cd_sec": 2},
         ],
@@ -123,7 +137,7 @@ __plugin_meta__ = PluginMetadata(
                 "trigger_method": "on_cmd",
                 "trigger_scene": "群内或私聊",
                 "trigger_condition": "牛牛MAA任务 <type> [params]",
-                "command_permission": "maa.control",
+                "command_permission": "maa.raw_task",
                 "brief_des": "高级：按协议 type 下发",
                 "detail_des": format_maa_raw_task_types_help(),
             },
@@ -144,7 +158,7 @@ __plugin_meta__ = PluginMetadata(
                 "trigger_method": "on_cmd",
                 "trigger_scene": "群内或私聊",
                 "trigger_condition": "牛牛清空MAA队列 [当前]",
-                "command_permission": "maa.control",
+                "command_permission": "maa.clear_queue",
                 "brief_des": "丢弃未拉取任务",
                 "detail_des": "只清牛牛侧排队，不影响 MAA 正在跑的任务。加「当前」仅清当前设备。",
             },
@@ -153,7 +167,7 @@ __plugin_meta__ = PluginMetadata(
                 "trigger_method": "on_cmd",
                 "trigger_scene": "私聊",
                 "trigger_condition": "牛牛切换MAA设备 <标识符或别名>",
-                "command_permission": "maa.bind",
+                "command_permission": "maa.switch_device",
                 "brief_des": "改远控目标设备",
                 "detail_des": "可用完整设备 id、别名或至少 8 位 id 前缀。",
             },
@@ -162,7 +176,7 @@ __plugin_meta__ = PluginMetadata(
                 "trigger_method": "on_cmd",
                 "trigger_scene": "私聊",
                 "trigger_condition": "牛牛MAA设备名 <设备> <别名>",
-                "command_permission": "maa.bind",
+                "command_permission": "maa.device_alias",
                 "brief_des": "给设备起名",
                 "detail_des": "别名为空则清除。设备参数规则同「牛牛切换MAA设备」。",
             },
@@ -234,6 +248,13 @@ def format_pending_type_counts(counts: dict[str, int]) -> str:
     return "待拉取明细：" + "、".join(parts)
 
 
+async def guard_command_cooldown(event: MessageEvent, command_id: str) -> bool:
+    if not await is_command_cooldown_ready(event, command_id):
+        return False
+    await refresh_command_cooldown(event, command_id)
+    return True
+
+
 bind_cmd = on_message(
     maa_command_rule(BIND_COMMAND_ALT, BIND_COMMAND),
     priority=5,
@@ -252,21 +273,21 @@ clear_queue_cmd = on_message(
     maa_command_rule(CLEAR_QUEUE_COMMAND),
     priority=5,
     block=True,
-    permission=permission_for_command("maa.control"),
+    permission=permission_for_command("maa.clear_queue"),
 )
 
 switch_device_cmd = on_message(
     maa_command_rule(SWITCH_DEVICE_COMMAND),
     priority=5,
     block=True,
-    permission=private_message_permission_for_command("maa.bind"),
+    permission=private_message_permission_for_command("maa.switch_device"),
 )
 
 device_alias_cmd = on_message(
     maa_command_rule(DEVICE_ALIAS_COMMAND),
     priority=5,
     block=True,
-    permission=private_message_permission_for_command("maa.bind"),
+    permission=private_message_permission_for_command("maa.device_alias"),
 )
 
 
@@ -290,12 +311,14 @@ maa_raw_task_cmd = on_message(
     maa_command_rule(RAW_TASK_COMMAND),
     priority=5,
     block=True,
-    permission=permission_for_command("maa.control"),
+    permission=permission_for_command("maa.raw_task"),
 )
 
 
 @bind_cmd.handle()
 async def handle_bind(event: PrivateMessageEvent):
+    if not await guard_command_cooldown(event, "maa.bind"):
+        return
     arg_text = extract_command_tail_any(
         event.get_plaintext() or "", BIND_COMMAND_ALT, BIND_COMMAND
     )
@@ -348,6 +371,8 @@ async def handle_bind(event: PrivateMessageEvent):
 @status_cmd.handle()
 async def handle_status(bot: Bot, event: MessageEvent):
     if not await ensure_maa_group_message_owner(event, bot):
+        return
+    if not await guard_command_cooldown(event, "maa.status"):
         return
     qq = int(event.get_user_id())
     from pallas.core.platform.shard.coord.maa_route_registry import (
@@ -404,6 +429,8 @@ async def handle_status(bot: Bot, event: MessageEvent):
 async def handle_clear_queue(bot: Bot, event: MessageEvent):
     if not await ensure_maa_group_message_owner(event, bot):
         return
+    if not await guard_command_cooldown(event, "maa.clear_queue"):
+        return
     qq = int(event.get_user_id())
     scope = extract_command_tail_any(event.get_plaintext() or "", CLEAR_QUEUE_COMMAND)
     device: str | None = None
@@ -428,6 +455,8 @@ async def handle_clear_queue(bot: Bot, event: MessageEvent):
 
 @switch_device_cmd.handle()
 async def handle_switch_device(event: PrivateMessageEvent):
+    if not await guard_command_cooldown(event, "maa.switch_device"):
+        return
     ref = extract_command_tail_any(event.get_plaintext() or "", SWITCH_DEVICE_COMMAND)
     if not ref:
         await switch_device_cmd.finish(
@@ -447,6 +476,8 @@ async def handle_switch_device(event: PrivateMessageEvent):
 
 @device_alias_cmd.handle()
 async def handle_device_alias(event: PrivateMessageEvent):
+    if not await guard_command_cooldown(event, "maa.device_alias"):
+        return
     text = extract_command_tail_any(event.get_plaintext() or "", DEVICE_ALIAS_COMMAND)
     if not text:
         await device_alias_cmd.finish(
@@ -514,6 +545,8 @@ async def enqueue_and_reply(
 async def handle_control(bot: Bot, event: MessageEvent):
     if not await ensure_maa_group_message_owner(event, bot):
         return
+    if not await guard_command_cooldown(event, "maa.control"):
+        return
     text = event.get_plaintext().strip()
     specs = parse_command_specs(text)
     if not specs:
@@ -530,6 +563,8 @@ async def handle_control(bot: Bot, event: MessageEvent):
 @maa_raw_task_cmd.handle()
 async def handle_raw_task(bot: Bot, event: MessageEvent):
     if not await ensure_maa_group_message_owner(event, bot):
+        return
+    if not await guard_command_cooldown(event, "maa.raw_task"):
         return
     arg_text = extract_command_tail_any(event.get_plaintext() or "", RAW_TASK_COMMAND)
     line = (
