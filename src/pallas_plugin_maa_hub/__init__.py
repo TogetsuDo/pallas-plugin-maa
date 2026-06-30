@@ -35,7 +35,7 @@ __plugin_meta__ = PluginMetadata(
             {
                 "func": "MAA HTTP 转发",
                 "trigger_method": "http",
-                "help_audience": "maintainer",
+                "help_audience": "superuser",
                 "trigger_condition": "POST /maa/getTask、/maa/reportStatus（hub）",
                 "brief_des": "分片统一 MAA 入口",
                 "detail_des": "按 QQ 用户标识符将请求转发至最近登记 worker；maa_public_base_url 填 hub 对外地址。",

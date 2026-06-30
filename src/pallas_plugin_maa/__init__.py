@@ -183,10 +183,10 @@ __plugin_meta__ = PluginMetadata(
             {
                 "func": "MAA HTTP 轮询",
                 "trigger_method": "http",
-                "help_audience": "maintainer",
+                "help_audience": "superuser",
                 "trigger_condition": "POST /maa/getTask、/maa/reportStatus",
                 "brief_des": "MAA 客户端轮询端点",
-                "detail_des": "维护者对照；用户只需在 MAA 填写二级帮助中的对接地址。",
+                "detail_des": "超管对照；用户只需在 MAA 填写二级帮助中的对接地址。",
             },
         ],
         "knowledge_sources": [

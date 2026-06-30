@@ -5,6 +5,9 @@
 
 ## [Unreleased]
 
+## [4.0.14] - 2026-06-30
+- refactor(metadata): `help_audience` 由 `maintainer` 改为 `superuser`（项目无独立维护者权限等级，统一到超管）
+
 ## [4.0.13] - 2026-06-27
 - docs(readme): 命令权限默认等级改用中文展示
 
